@@ -24,7 +24,8 @@
 import numpy as np
 import pandas as pd
 from sklearn.model_selection import train_test_split
-
+import requests
+import io
 
 class NeuralNet:
     def __init__(self, dataFile, header=True, h=4):
@@ -159,8 +160,19 @@ class NeuralNet:
         # TODO: obtain prediction on self.test_dataset
         return 0
 
+
+url = "https://docs.google.com/spreadsheets/d/1ZqlnI482tRHO7kI-FH5uxyM2bFBo_J3B/edit#gid=987132181"
+
+# read data from public source
+read_data = requests.get(url).content
+df = pd.read_csv(io.StringIO(read_data.decode('utf-8')), delimiter='\t')
+
 if __name__ == "__main__":
+    '''
     neural_network = NeuralNet("train.csv")
     neural_network.train()
     testError = neural_network.predict()
     print("Test error = " + str(testError))
+    print()
+    '''
+    print(df.head())
