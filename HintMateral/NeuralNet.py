@@ -159,7 +159,6 @@ class NeuralNet:
         # TODO: obtain prediction on self.test_dataset
         return 0
 
-
 if __name__ == "__main__":
     neural_network = NeuralNet("train.csv")
     neural_network.train()
