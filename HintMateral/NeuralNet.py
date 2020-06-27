@@ -31,9 +31,11 @@ import io
 # read data from public source
 url = "https://raw.githubusercontent.com/hip-hipJorge/ML-Assignment2/master/Assignment-2/ENB2012_data.csv"
 read_data = requests.get(url).content
+# include print options to avoid sci. notation
+np.set_printoptions(suppress=True)
 
 class NeuralNet:
-    def __init__(self, dataFile, header=True, h=4):
+    def __init__(self, dataFile, header=True, h=8):
         #np.random.seed(1)
         # train refers to the training dataset
         # test refers to the testing dataset
@@ -43,8 +45,9 @@ class NeuralNet:
         self.train_dataset, self.test_dataset = train_test_split(processed_data)
         ncols = len(self.train_dataset.columns)
         nrows = len(self.train_dataset.index)
-        self.X = self.train_dataset.iloc[:, 0:(ncols -1)].values.reshape(nrows, ncols-1)
-        self.y = self.train_dataset.iloc[:, (ncols-1)].values.reshape(nrows, 1)
+        self.X = np.around(self.train_dataset.iloc[:, 0:(ncols-2)].values.reshape(nrows, ncols-2), 3)
+        self.y = self.train_dataset.iloc[:, (ncols-2):ncols].values.reshape(nrows, 2)
+        #print(self.y)
         #
         # Find number of input and output layers from the dataset
         #
@@ -102,16 +105,16 @@ class NeuralNet:
 
 
     def __ReLu_derivative(self, x):
-        if x > 0:
+        if x.all() > 0:
             return 1
-        elif x < 0:
+        elif x.all() < 0:
             return 0
         else:
             return math.nan
 
     def preprocess(self, X):
         # Add all of the dataset except the last 2 rows
-        X = X[X.columns[0:8]]
+        #X = X[X.columns[0:8]]
         return X
 
     # Below is the training function
@@ -195,13 +198,13 @@ class NeuralNet:
 
         return 0
 
-df = pd.read_csv(io.StringIO(read_data.decode('utf-8')))
+
 
 if __name__ == "__main__":
+    df = io.StringIO(read_data.decode('utf-8'))
 
-    neural_network = NeuralNet("train.csv")
+    neural_network = NeuralNet(df)
     neural_network.train()
     testError = neural_network.predict()
-    print("Test error = " + str(testError))
-
+    #print("Test error = " + str(testError))
 
