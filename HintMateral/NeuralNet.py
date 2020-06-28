@@ -35,7 +35,7 @@ read_data = requests.get(url).content
 np.set_printoptions(suppress=True)
 
 class NeuralNet:
-    def __init__(self, dataFile, header=True, h=8):
+    def __init__(self, dataFile, header=True, h=2):
         #np.random.seed(1)
         # train refers to the training dataset
         # test refers to the testing dataset
@@ -46,8 +46,12 @@ class NeuralNet:
         ncols = len(self.train_dataset.columns)
         nrows = len(self.train_dataset.index)
         self.X = np.around(self.train_dataset.iloc[:, 0:(ncols-2)].values.reshape(nrows, ncols-2), 3)
+        print("X dataset:")
+        print(self.X)
         self.y = self.train_dataset.iloc[:, (ncols-2):ncols].values.reshape(nrows, 2)
-        #print(self.y)
+        print("Y dataset")
+        print(self.y)
+        print()
         #
         # Find number of input and output layers from the dataset
         #
@@ -113,16 +117,19 @@ class NeuralNet:
             return math.nan
 
     def preprocess(self, X):
-        # Add all of the dataset except the last 2 rows
-        #X = X[X.columns[0:8]]
+        # none needed
         return X
 
     # Below is the training function
 
-    def train(self, max_iterations=60000, learning_rate=0.25):
+    def train(self, max_iterations=1, learning_rate=0.25):
         for iteration in range(max_iterations):
-            out = self.forward_pass()
+            out = self.forward_pass(activation="sigmoid")
+            print("Computed output:")
+            print(out)
             error = 0.5 * np.power((out - self.y), 2)
+            print("Computed error:")
+            print(error)
             # TODO: I have coded the sigmoid activation, you have to do the rest
             self.backward_pass(out, activation="sigmoid")
 
