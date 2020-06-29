@@ -37,7 +37,7 @@ read_data = requests.get(url).content
 np.set_printoptions(suppress=True, precision=3)
 
 class NeuralNet:
-    def __init__(self, dataFile, header=True, h=1):
+    def __init__(self, dataFile, header=True, h=4):
         #np.random.seed(1)
         # train refers to the training dataset
         # test refers to the testing dataset
@@ -88,32 +88,37 @@ class NeuralNet:
 
     def __sigmoid(self, x):
         for i in range(x.shape[0]):
-            x[i] = 1 / (1 + math.exp(-x[i]))
+            for j in range(x.shape[1]):
+                x[i][j] = 1 / (1 + math.exp(-x[i][j]))
         return x
 
     def __tanh(self, x):
+        x = x.astype(float)
         return (np.exp(x) - np.exp(-x)) / (np.exp(x) + np.exp(-x))
 
     def __ReLu(self, x):
-        return max(0, x)
+        for i in range(x.shape[0]):
+            for j in range(x.shape[1]):
+                x[i][j] = max(0, x[i][j])
+        return x
 
     # derivative of sigmoid function, indicates confidence about existing weight
 
     def __sigmoid_derivative(self, x):
         return x * (1 - x)
 
-
     def __tanh_derivative(self, x):
-        return ((2 * np.exp(2 * x) / (np.exp(2 * x) + 1)) * (1 - self.__tanh(x)))
-
+        x = x.astype(float)
+        return 1 - x**2
 
     def __ReLu_derivative(self, x):
-        if x.all() > 0:
-            return 1
-        elif x.all() < 0:
-            return 0
-        else:
-            return math.nan
+        for i in range(x.shape[0]):
+            for j in range(x.shape[1]):
+                if x[i][j] > 0:
+                    x[i][j] = 1
+                else:
+                    x[i][j] = 0
+        return x
 
     def preprocess(self, X):
         for i in range(len(X.index)):
@@ -122,36 +127,30 @@ class NeuralNet:
 
     # Below is the training function
 
-    def train(self, max_iterations=1, learning_rate=0.25):
+    def train(self, activation="sigmoid", max_iterations=10, learning_rate=0.25):
         for iteration in range(max_iterations):
-            out = self.forward_pass(activation="sigmoid")
+            out = self.forward_pass(activation)
             error = 0.5 * np.power((out - self.y), 2)
             # TODO: I have coded the sigmoid activation, you have to do the rest
-            self.backward_pass(out, activation="sigmoid")
+            self.backward_pass(out, activation)
 
             update_weight_output = learning_rate * np.dot(self.X_hidden.T, self.deltaOut)
-            print("shape of x_hidden.t: " + str(self.X_hidden.T.shape))
             update_weight_output_b = learning_rate * np.dot(np.ones((np.size(self.X, 0), 1)).T, self.deltaOut)
-            print("shape of delta out: " + str(self.deltaOut.shape))
 
             update_weight_hidden = learning_rate * np.dot(self.X.T, self.deltaHidden)
-            print("update weight hidden:\n" + str(update_weight_hidden))
-
             update_weight_hidden_b = learning_rate * np.dot(np.ones((np.size(self.X, 0), 1)).T, self.deltaHidden)
-            print("shape of w_hidden: " + str(self.W_hidden.shape))
-            print(self.W_hidden)
-            self.W_output += float(update_weight_output)
-            self.Wb_output += float(update_weight_output_b)
-            np.add(self.W_hidden, update_weight_hidden)
-            print(self.W_hidden)
-            self.W_hidden += update_weight_hidden
-            self.Wb_hidden += update_weight_hidden_b
 
-        print("After " + str(max_iterations) + " iterations, the total error is " + str(np.sum(error)))
-        print("The final weight vectors are (starting from input to output layers) \n" + str(self.W_hidden))
+            self.W_output = np.add(self.W_output, update_weight_output)
+            self.Wb_output = np.add(self.Wb_output, update_weight_output_b)
+
+            self.W_hidden = np.add(self.W_hidden, update_weight_hidden)
+            self.Wb_hidden = np.add(self.Wb_hidden, update_weight_hidden_b)
+
+        print("After " + str(max_iterations) + " iterations, the total error is " + str(np.sum(error)/len(error)))
+        print("The final weight vectors are (starting from input to hidden layers) \n" + str(self.W_hidden))
         print("The final weight vectors are (starting from input to output layers) \n" + str(self.W_output))
 
-        print("The final bias vectors are (starting from input to output layers) \n" + str(self.Wb_hidden))
+        print("The final bias vectors are (starting from input to hidden layers) \n" + str(self.Wb_hidden))
         print("The final bias vectors are (starting from input to output layers) \n" + str(self.Wb_output))
 
     def forward_pass(self, activation="sigmoid"):
@@ -253,7 +252,13 @@ if __name__ == "__main__":
     '''
 
     neural_network = NeuralNet(df)
+    print("Sigmoid activation function:")
     neural_network.train()
+    print("\nReLu activation function:")
+    neural_network.train("ReLu")
+    print("\nTanh activation function:")
+    neural_network.train("tanh")
+
     #testError = neural_network.predict()
     #print("Test error = " + str(testError))
 
