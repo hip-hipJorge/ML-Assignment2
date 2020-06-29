@@ -29,29 +29,26 @@ import requests
 import io
 
 # read data from public source
-url = "https://raw.githubusercontent.com/hip-hipJorge/ML-Assignment2/master/Assignment-2/ENB2012_data.csv"
+#url = "https://raw.githubusercontent.com/hip-hipJorge/ML-Assignment2/master/Assignment-2/ENB2012_data.csv"
+url = "https://raw.githubusercontent.com/hip-hipJorge/ml6375-A1/master/car.data"
+
 read_data = requests.get(url).content
-# include print options to avoid sci. notation
-np.set_printoptions(suppress=True)
+# print formatting
+np.set_printoptions(suppress=True, precision=3)
 
 class NeuralNet:
-    def __init__(self, dataFile, header=True, h=2):
+    def __init__(self, dataFile, header=True, h=1):
         #np.random.seed(1)
         # train refers to the training dataset
         # test refers to the testing dataset
         # h represents the number of neurons in the hidden layer
-        raw_input = pd.read_csv(dataFile)
+        raw_input = pd.read_csv(dataFile, delimiter="\t")
         processed_data = self.preprocess(raw_input)
         self.train_dataset, self.test_dataset = train_test_split(processed_data)
         ncols = len(self.train_dataset.columns)
         nrows = len(self.train_dataset.index)
-        self.X = np.around(self.train_dataset.iloc[:, 0:(ncols-2)].values.reshape(nrows, ncols-2), 3)
-        print("X dataset:")
-        print(self.X)
-        self.y = self.train_dataset.iloc[:, (ncols-2):ncols].values.reshape(nrows, 2)
-        print("Y dataset")
-        print(self.y)
-        print()
+        self.X = self.train_dataset.iloc[:, 0:(ncols-1)].values.reshape(nrows, ncols-1)
+        self.y = self.train_dataset.iloc[:, ncols-1:ncols].values.reshape(nrows, 1)
         #
         # Find number of input and output layers from the dataset
         #
@@ -76,7 +73,7 @@ class NeuralNet:
     def __activation(self, x, activation="sigmoid"):
         if activation == "sigmoid":
             self.__sigmoid(self, x)
-        if activation ==  "tanh":
+        if activation == "tanh":
             self.__tanh(x)
         if activation == "ReLu":
             self.__ReLu(x)
@@ -84,13 +81,15 @@ class NeuralNet:
     def __activation_derivative(self, x, activation="sigmoid"):
         if activation == "sigmoid":
             self.__sigmoid_derivative(self, x)
-        if activation ==  "tanh":
+        if activation == "tanh":
             self.__tanh_derivative(x)
         if activation == "ReLu":
             self.__ReLu_derivative(x)
 
     def __sigmoid(self, x):
-        return 1 / (1 + np.exp(-x))
+        for i in range(x.shape[0]):
+            x[i] = 1 / (1 + math.exp(-x[i]))
+        return x
 
     def __tanh(self, x):
         return (np.exp(x) - np.exp(-x)) / (np.exp(x) + np.exp(-x))
@@ -117,7 +116,8 @@ class NeuralNet:
             return math.nan
 
     def preprocess(self, X):
-        # none needed
+        for i in range(len(X.index)):
+            X.loc[i] = list_format(list(X.iloc[i, 0:7]))
         return X
 
     # Below is the training function
@@ -125,22 +125,25 @@ class NeuralNet:
     def train(self, max_iterations=1, learning_rate=0.25):
         for iteration in range(max_iterations):
             out = self.forward_pass(activation="sigmoid")
-            print("Computed output:")
-            print(out)
             error = 0.5 * np.power((out - self.y), 2)
-            print("Computed error:")
-            print(error)
             # TODO: I have coded the sigmoid activation, you have to do the rest
             self.backward_pass(out, activation="sigmoid")
 
             update_weight_output = learning_rate * np.dot(self.X_hidden.T, self.deltaOut)
+            print("shape of x_hidden.t: " + str(self.X_hidden.T.shape))
             update_weight_output_b = learning_rate * np.dot(np.ones((np.size(self.X, 0), 1)).T, self.deltaOut)
+            print("shape of delta out: " + str(self.deltaOut.shape))
 
             update_weight_hidden = learning_rate * np.dot(self.X.T, self.deltaHidden)
-            update_weight_hidden_b = learning_rate * np.dot(np.ones((np.size(self.X, 0), 1)).T, self.deltaHidden)
+            print("update weight hidden:\n" + str(update_weight_hidden))
 
-            self.W_output += update_weight_output
-            self.Wb_output += update_weight_output_b
+            update_weight_hidden_b = learning_rate * np.dot(np.ones((np.size(self.X, 0), 1)).T, self.deltaHidden)
+            print("shape of w_hidden: " + str(self.W_hidden.shape))
+            print(self.W_hidden)
+            self.W_output += float(update_weight_output)
+            self.Wb_output += float(update_weight_output_b)
+            np.add(self.W_hidden, update_weight_hidden)
+            print(self.W_hidden)
             self.W_hidden += update_weight_hidden
             self.Wb_hidden += update_weight_hidden_b
 
@@ -206,12 +209,52 @@ class NeuralNet:
         return 0
 
 
+attr = {
+    # buying/maint/safety
+    'vhigh': 4,
+    'high': 3,
+    'med': 2,
+    'low': 1,
+    # lug_boot
+    'big': 3,
+    'small': 1,
+    # doors/persons
+    '2': 2,
+    '3': 3,
+    '4': 4,
+    '5more': 5,
+    # persons
+    'more': 5,
+    # class values
+    'unacc': 1,
+    'acc': 2,
+    'good': 3,
+    'vgood': 4
+}
+
+
+def list_format(lst):
+    for i in range(len(lst)):
+        lst[i] = float(attr[lst[i]])
+    return lst
+
 
 if __name__ == "__main__":
     df = io.StringIO(read_data.decode('utf-8'))
+    '''
+    dframe = pd.read_csv(df, delimiter="\t")
+    print(dframe.shape)
+    print(dframe.head())
+    print()
+    for i in range(len(dframe.index)):
+        dframe.loc[i] = list_format(list(dframe.iloc[i, 0:7]))
+    print(dframe.head())
+
+    '''
 
     neural_network = NeuralNet(df)
     neural_network.train()
-    testError = neural_network.predict()
+    #testError = neural_network.predict()
     #print("Test error = " + str(testError))
+
 
