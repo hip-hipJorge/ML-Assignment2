@@ -12,7 +12,7 @@ data and then run the processed data through your neural net.
 ## Contains:
 - CS4375_CoverPage
 - NeuralNet.py 
-- Report.txt (Includes Theoretical Part)
+- Theoretical_Part.pdf (Includes Theoretical Part)
 - README.md
 
 ## Run Instructions 

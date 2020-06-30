@@ -35,7 +35,7 @@ np.set_printoptions(suppress=True, precision=3)
 
 
 class NeuralNet:
-    def __init__(self, dataFile, header=True, h=4):
+    def __init__(self, dataFile, h=4, header=True):
         #np.random.seed(1)
         # train refers to the training dataset
         # test refers to the testing dataset
@@ -258,11 +258,13 @@ def list_format(lst):
 
 
 def main():
-    df = io.StringIO(read_data.decode('utf-8'))
-    neural_network = NeuralNet(df)
+    # prompts
+    iter = int(input("Number of iterations (int)? "))
+    learning_rate = float(input("Desired Learning rate (0 < optimal < 0.05)? "))
+    n_hidden = int(input("Desired number of nodes in hidden layer? "))
 
-    iter = int(input("Number of iterations? (int): "))
-    learning_rate = float(input("Desired Learning rate? (0 < optimal < 0.3): "))
+    df = io.StringIO(read_data.decode('utf-8'))
+    neural_network = NeuralNet(df, n_hidden)
 
     print("Sigmoid activation function:")
     neural_network.train("sigmoid", iter, learning_rate)
