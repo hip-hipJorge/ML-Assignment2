@@ -33,6 +33,7 @@ read_data = requests.get(url).content
 # print formatting
 np.set_printoptions(suppress=True, precision=3)
 
+
 class NeuralNet:
     def __init__(self, dataFile, header=True, h=4):
         #np.random.seed(1)
@@ -248,28 +249,33 @@ attr = {
     'vgood': 4
 }
 
+
 # pre-process helper function
 def list_format(lst):
     for i in range(len(lst)):
         lst[i] = float(attr[lst[i]])
     return lst
 
+
 def main():
     df = io.StringIO(read_data.decode('utf-8'))
     neural_network = NeuralNet(df)
 
+    iter = int(input("Number of iterations? (int): "))
+    learning_rate = float(input("Desired Learning rate? (0 < optimal < 0.3): "))
+
     print("Sigmoid activation function:")
-    neural_network.train("sigmoid", 50000, 0.1)
+    neural_network.train("sigmoid", iter, learning_rate)
     testError = neural_network.predict()
     print("Test error for Sigmoid activation = " + str(testError))
 
     print("\nTanh activation function:")
-    neural_network.train("tanh", 50000, 0.1)
+    neural_network.train("tanh", iter, learning_rate)
     testError = neural_network.predict("tanh")
     print("Test error for Tanh activation = " + str(testError))
 
     print("\nReLu activation function:")
-    neural_network.train("ReLu", 50000, 0.1)
+    neural_network.train("ReLu", iter, learning_rate)
     testError = neural_network.predict("ReLu")
     print("Test error for ReLu activation = " + str(testError))
 
